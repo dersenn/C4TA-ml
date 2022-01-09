@@ -1,2 +1,2 @@
 # C4TA-ml
-Adventures in Machine Learning
+Adventures in Machine Learning.
