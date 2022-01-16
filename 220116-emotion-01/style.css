@@ -7,10 +7,24 @@
 body {
     width: 100vw;
     height: 100vh;
+    padding: 1em;
 }
 
 #p5-container {
     width: 100vmin;
-    height: 100vmin;
-    background: transparent;
+    height: calc(100vmin*.75);
+    background: #000;
+    color: #0f0;
+}
+
+
+
+#buttons button,
+#buttons input {
+    background: #000;
+    color: #fff;
+    padding: .75em;
+    border: 1px solid #0f0;
+    border-radius: 505%;
+
 }

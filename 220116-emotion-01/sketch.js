@@ -1,186 +1,154 @@
+// Canvas Vars
+const container = document.getElementById('p5-container')
+let canW = container.offsetWidth //canvas Width
+let canH = container.offsetHeight //canvas Height
+let canMax = Math.max(canW, canH) //longer canvas side
+let canMin = Math.min(canW, canH) //shorter canvas side
 
 
-let facemesh;
-let video;
-let predictions = [];
+// Current Sketch Vars
+let mobileNet
+let classifier
 
-/////////////////////////////////////////////////////////////// P5 SETUP
+let video
+
+let classes = ["Happy", "Surprised", "Neutral"]
+let buttons = ["buttonHappy", "buttonSurprised", "buttonNeutral"]
+
+let faceapi
+let detections = []
+
+
+// p5 Setup
 function setup() {
-  createCanvas(640, 480);
-  video = createCapture(VIDEO);
-  video.size(width, height);
+  let canvas = createCanvas(canW,canH)
+  canvas.parent(container)
 
-  facemesh = ml5.facemesh(video, modelReady);
+  video = createCapture(VIDEO)
+  video.size(width, height)
+  video.hide()
 
-  // This sets up an event that fills the global variable "predictions"
-  // with an array every time new predictions are made
-  facemesh.on("predict", results => {
-    predictions = results;
-  });
+  const options = {numLabels: 3}
 
-  // Hide the video element, and just show the canvas
-  video.hide();
+  mobileNet = ml5.featureExtractor("MobileNet", modelReady)
+  classifier = mobileNet.classification(video, options)
 
-  textSize(15)
-  textAlign(CENTER, CENTER)
+  initializeButtons()
+
+  const detectionOptions = {
+    withLandmarks: true,
+    withDescriptors: false,
+  };
+  // Initialize the magicFeature
+  faceapi = ml5.faceApi(video, detectionOptions, modelLoaded);
+
+
 }
 
-/////////////////////////////////////////////////////////////// P5 DRAW
+
 function draw() {
-  background(0)
-  image(video, 0, 0, width, height);
-  filter(GRAY);
-
-  // bgnose()
-
-  colorMode(RGB, 255)
-
-  raiseBrow()
-  drawSilhouette()
-  // drawKeypoints()
-  // drawRays()
-  // drawLeftEye()
-  mouthRays()
-
-  noStroke()
-  fill(255)
-  text("raise right eyebrow to change bg", width/2, 15)
-  text("open mouth for some rays", width/2, 33)
-
-  stroke(255)
-  strokeWeight(1)
-  noFill()
-  ellipse(width/2, height/2, height/2.5, height/2.5)
+  image(video, 0, 0)
+  // ellipse(canW,0,10,10)
+  if(detections.length > 0) {
+    drawBox()
+  }
 }
 
 
-/////////////////////////////////////////////////////////////// FUNCTIONS
+function initializeButtons() {
+  for (let i = 0; i < classes.length; i++) {
+    let className = classes[i].toString()
+    buttons[i] = select("#" + className)
+    buttons[i].mousePressed(function() {
+      classifier.addImage(className)
+      let span = document.getElementById(className + "Images")
+      let numImages = parseInt(span.innerHTML)
+      numImages++
+      span.innerHTML = numImages
+    })
+  }
+
+  train = select("#Train")
+  train.mousePressed(function() {
+    classifier.train(function(lossValue) {
+      if(lossValue) {
+        loss = lossValue
+        select("#loss").html(`Loss: ${loss}`)
+      } else {
+        select("#loss").html(`Finished, Final loss: ${loss}`)
+      }
+    })
+  })
+
+  predict = select("#Predict")
+  predict.mousePressed(classify)
+
+  saveModel = select("#saveModel")
+  saveModel.mousePressed(function() {
+    classifier.save()
+  })
+
+  loadModel = select("#loadModel")
+  loadModel.mousePressed(function() {
+    select("#status").html("Loaded custom Model")
+  })
+
+  loadModel.changed(function() {
+    classifier.load(loadModel.elt.files)
+  })
+}
+
+
+function classify() {
+  classifier.classify(gotResult)
+}
+
+function gotResult(error, result) {
+  if (error) {
+    console.error(error)
+  }
+  if(result){
+    select("#result").html(result[0].label)
+    select("#confidence").html(`${result[0].confidence.toFixed(2) * 100}%`)
+    classify()
+  }
+}
 
 function modelReady() {
-  console.log("Model ready!");
+  console.log("model loaded")
 }
 
-function raiseBrow() {
-  for (let i = 0; i < predictions.length; i += 1) {
-    const browPtLeft = predictions[i].annotations.leftEyebrowUpper[3]
-    const eyePtLeft = predictions[i].annotations.leftEyeUpper0[3]
 
-    let dleft = dist(browPtLeft[0], browPtLeft[1], eyePtLeft[0], eyePtLeft[1])
-    let g = map(dleft, 15, 35, 0, 255)
+// When the model is loaded
+function modelLoaded() {
+  console.log("FaceApi Loaded")
 
-    fill(0, g, 0)
-    noStroke()
-    // blendMode(MULTIPLY)
-    rect(0, 0, width, height)
+  // Make some sparkles
+  faceapi.detect(detectFaces);
+}
 
-    fill(255, 0, 0)
-    ellipse(browPtLeft[0], browPtLeft[1], 10, 10)
-    ellipse(eyePtLeft[0], eyePtLeft[1], 10, 10)
+function detectFaces(error, result) {
+  if (error) {
+    console.error(error)
   }
+  detections = result
+  faceapi.detect(detectFaces)
 }
 
-function bgnose() {
-  for (let i = 0; i < predictions.length; i++) {
-    const nosetip = predictions[i].annotations.noseTip
-    let h = map(nosetip[0][0], 0, width, 0, 100)
-    let s = map(nosetip[0][1], 0, height, 0, 100)
-    colorMode(HSB, 100)
-    background(h, 100, s, 50)
-  }
-}
-
-function mouthRays() {
-  for (let i = 0; i < predictions.length; i++) {
-    const lipsLower = predictions[i].annotations.lipsLowerInner
-    const lipsUpper = predictions[i].annotations.lipsUpperInner
-    const lips = lipsLower.concat(lipsUpper)
-    const c = {
-      x: lipsLower[10][0] - (lipsLower[10][0]-lipsLower[0][0])/2,
-      y: lipsLower[5][1] - (lipsLower[5][1]-lipsUpper[5][1])/2
-    }
-
-    let opening = dist(lipsLower[5][0], lipsLower[5][1], lipsUpper[5][0], lipsUpper[5][1])
-    if (opening > 10) {
-      for (let i in lips) {
-        let v = createVector(lips[i][0]-c.x, lips[i][1]-c.y)
-        stroke(255)
-        strokeWeight(1)
-        line(c.x, c.y, c.x + v.x * opening, c.y + v.y * opening)
-      }
-    }
-
-    // ellipse(c.x, c.y, 1, 1)
-  }
-}
-
-// A function to draw ellipses over the detected keypoints
-function drawKeypoints() {
-  for (let i = 0; i < predictions.length; i += 1) {
-    const keypoints = predictions[i].scaledMesh
-
-    // Draw facial keypoints.
-    for (let j = 0; j < keypoints.length; j += 1) {
-      const [x, y] = keypoints[j];
-
-      fill(0, 255, 0);
-      noStroke()
-      ellipse(x, y, 1, 1);
-    }
-  }
-}
-
-function drawSilhouette() {
-  for (let i = 0; i < predictions.length; i += 1) {
-    const silhouette = predictions[i].annotations.silhouette
+function drawBox(detections) {
+  for (let i = 0; i < detections.length; i++) {
+    let faceBox = detections[i].alignedRect
+    let x = faceBox._box._x
+    let y = faceBox._box._y
+    let boxW = faceBox._box._width
+    let boxH = faceBox._box._height
 
     noFill()
-    stroke(0, 0, 0)
-    strokeWeight(5)
-    beginShape(POINTS)
-    for (let i in silhouette) {
-        let singlePoint = silhouette[i]
-        curveVertex(singlePoint[0], singlePoint[1])
-    }
-    endShape()
+    strokeWeight(4)
+    stroke(0,255,0)
+    rect(x, y, boxW, boxH)
   }
 }
 
-function drawLeftEye() {
-  for (let i = 0; i < predictions.length; i += 1) {
-    const upper = predictions[i].annotations.leftEyeUpper0
-    const lower = predictions[i].annotations.leftEyeLower0
 
-
-    noFill()
-    stroke(255, 0, 0)
-    strokeWeight(5)
-    beginShape(POINTS)
-    for (let i in upper) {
-        let singlePoint = upper[i]
-        curveVertex(singlePoint[0], singlePoint[1])
-    }
-    endShape()
-    beginShape(POINTS)
-    for (let i in lower) {
-        let singlePoint = lower[i]
-        curveVertex(singlePoint[0], singlePoint[1])
-    }
-    endShape()
-  }
-}
-
-function drawRays() {
-  for (let i = 0; i < predictions.length; i += 1) {
-    const keypoints = predictions[i].scaledMesh;
-
-    // Draw facial keypoints.
-    for (let j = 0; j < keypoints.length; j += 1) {
-      const [x, y] = keypoints[j];
-
-      noFill()
-      stroke(0, 255, 0);
-      strokeWeight(1)
-      line(width/2, height/2, x, y)
-    }
-  }
-}
+// My only friend, the end.
