@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title> — C4TA p5</title>
+
+    <meta name="author" content="Christoph Senn">
+    <meta name="description" content="Experiments in ml5.js">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main id="p5-container">
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+<!--     <script src="corefunctions.js"></script>
+ -->    <script src="sketch.js"></script>
+    <script>
+        // use current directory name as title for the site
+        (function() {
+            var location = window.location.pathname;
+            var path = location.substring(0, location.lastIndexOf("/"));
+            var directoryName = path.substring(path.lastIndexOf("/")+1);
+            document.title = directoryName
+        })();
+    </script>
+
+</body>
+
+</html>
