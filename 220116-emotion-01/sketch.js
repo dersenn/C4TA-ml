@@ -12,74 +12,69 @@ let classifier;
 
 let video;
 
-let classes = [ "Happy", "Surprised", "Neutral"]
-let buttons = ["buttonHappy", "buttonSurprised", "buttonNeutral"]
-let removebuttons = ["removebuttonHappy", "removebuttonSurprised", "removebuttonNeutral"]
+let classes = [ "Happy", "Surprised", "Masked", "Neutral"]
+let buttons = ["buttonHappy", "buttonSurprised", "buttonMasked", "buttonNeutral"]
+let removebuttons = ["removebuttonHappy", "removebuttonSurprised", "removebuttonMasked", "removebuttonNeutral"]
 
 let happyImages = []
 let surprisedImages = []
+let maskedImages = []
 let neutralImages = []
 
 let faceapi;
-
 let detections = []
 
-function setup() 
-{
-  can = createCanvas(640, 480);
+
+function setup() {
+    can = createCanvas(640, 480);
     can.parent(container)
 
     video = createCapture(VIDEO)
     video.size(width, height)
     video.hide()
 
-    const options = {numLabels : 3}
+    const options = {numLabels : 4}
     mobileNet = ml5.featureExtractor("MobileNet", modelReady);
     classifier = mobileNet.classification(video, options)
-    
+
     const detectionOptions = {
         withLandmarks: true,
         withDescriptors: false,
       };
 
-
    // Initialize the magicFeature
     faceapi = ml5.faceApi(video,detectionOptions, modelLoaded);
-    
+
     initalizeButtons()
 }
 
 
+function draw() {
+    image(video, 0, 0);
 
-function draw()
-{
- image(video, 0, 0);
-
- if(detections.length > 0){
-     drawBox(detections)
- }
+    if (detections.length > 0) {
+        drawBox(detections)
+    }
 }
+
 
 function modelReady(){
    select("#status").html("Model Loaded")
 }
 
- 
-  // When the model is loaded
-  function modelLoaded() {
+// When the model is loaded
+function modelLoaded() {
     select("#status").html("FaceApi Model Loaded")
-  
+
     // Make some sparkles
     faceapi.detect(detectFaces);
-  }
-  
+}
 
-  
 
 function initalizeButtons() {
-  
+
     // intialize class buttons
-    for(let i = 0; i< classes.length; i++){
+    for (let i = 0; i< classes.length; i++) {
         let className = classes[i].toString()
         buttons[i] = select("#" + className);
         buttons[i].mousePressed( function() {
@@ -93,7 +88,7 @@ function initalizeButtons() {
                 var numImages = parseInt(span.innerHTML)
                 numImages++
                 span.innerHTML = numImages;
-                
+
             } else if ( className == "Surprised") {
                 surprisedImages.push(img);
                 var span = document.getElementById(className + "Images")
@@ -101,47 +96,51 @@ function initalizeButtons() {
                 numImages++
                 span.innerHTML = numImages;
 
-            }else {
-
-                neutralImages.push(img);
+            } else if ( className == "Masked") {
+                maskedImages.push(img);
                 var span = document.getElementById(className + "Images")
                 var numImages = parseInt(span.innerHTML)
                 numImages++
                 span.innerHTML = numImages;
 
-
+            } else {
+                neutralImages.push(img);
+                var span = document.getElementById(className + "Images")
+                var numImages = parseInt(span.innerHTML)
+                numImages++
+                span.innerHTML = numImages;
             }
-
-
-
-
-           
-
         })
     }
 
     //initalize remove buttons
-    
-    for(let i = 0; i < classes.length; i++){
+    for (let i = 0; i < classes.length; i++) {
         let className = classes[i].toString()
         removebuttons[i] = select("#remove" + className + "Images");
         removebuttons[i].mousePressed( function() {
-           
-            if (className == "Happy"){
+
+            if (className == "Happy") {
                 happyImages.splice(0, happyImages.length)
                 var span = document.getElementById(className + "Images")
                 var numImages = parseInt(span.innerHTML)
                 numImages = 0
                 span.innerHTML = numImages;
 
-            }else if ( className == "Surprised"){
+            } else if ( className == "Surprised") {
                 surprisedImages.splice(0, surprisedImages.length)
                 var span = document.getElementById(className + "Images")
                 var numImages = parseInt(span.innerHTML)
                 numImages = 0
                 span.innerHTML = numImages;
 
-            }else {
+            } else if ( className == "Masked") {
+                maskedImages.splice(0, surprisedImages.length)
+                var span = document.getElementById(className + "Images")
+                var numImages = parseInt(span.innerHTML)
+                numImages = 0
+                span.innerHTML = numImages;
+
+            } else {
                 neutralImages.splice(0, neutralImages.length)
                 var span = document.getElementById(className + "Images")
                 var numImages = parseInt(span.innerHTML)
@@ -151,17 +150,16 @@ function initalizeButtons() {
         })
     }
 
-
     train = select("#Train");
-    train.mousePressed(async function(){
+    train.mousePressed(async function() {
 
-     await addImagesToClassifier();
+        await addImagesToClassifier();
 
         classifier.train(function(lossValue){
-            if(lossValue){
+            if (lossValue) {
                 loss = lossValue;
                 select("#loss").html(`Loss: ${loss} `);
-            }else {
+            } else {
                 select("#loss").html(`Finished , Final Loss: ${loss} `);
             }
         });
@@ -186,7 +184,6 @@ function initalizeButtons() {
 }
 
 function classify() {
-
     classifier.classify(gotResult);
 }
 
@@ -194,19 +191,20 @@ async function addImagesToClassifier() {
 
     console.log("adding images")
 
-    for( let i = 0; i < happyImages.length; i++){
+    for (let i = 0; i < happyImages.length; i++) {
         classifier.addImage(happyImages[i], "Happy")
-
     }
 
-    for( let i = 0; i< surprisedImages.length; i++){
+    for (let i = 0; i< surprisedImages.length; i++) {
         classifier.addImage(surprisedImages[i], "Surprised")
-
     }
 
-    for( let i = 0; i< neutralImages.length; i++){
-        classifier.addImage(neutralImages[i], "Neutral")
+    for (let i = 0; i< maskedImages.length; i++) {
+        classifier.addImage(maskedImages[i], "Masked")
+    }
 
+    for (let i = 0; i< neutralImages.length; i++) {
+        classifier.addImage(neutralImages[i], "Neutral")
     }
 }
 
@@ -223,19 +221,18 @@ function gotResult(error, result){
 
 }
 
-function detectFaces(error, result){
-    if(error){
+function detectFaces(error, result) {
+    if (error) {
         console.error(error)
     }
-
 
     detections = result;
     faceapi.detect(detectFaces);
 }
 
-function drawBox(detections){
+function drawBox(detections) {
 
-    for(let i = 0; i<detections.length; i++){
+    for (let i = 0; i<detections.length; i++) {
         let faceBox = detections[i].alignedRect;
         let x = faceBox._box._x;
         let y = faceBox._box._y;
@@ -243,10 +240,9 @@ function drawBox(detections){
         let boxW = faceBox._box._width;
         let boxH = faceBox._box._height;
 
-
         noFill();
         strokeWeight(5)
-        stroke(0, 0,255)
+        stroke(0, 255, 0)
         rect(x,y, boxW, boxH)
     }
 }
