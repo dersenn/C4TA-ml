@@ -94,6 +94,7 @@ function drawEyes(detections, counter) {
     ellipse(rightEye[1]._x, rightEye[1]._y, c+5, c+5)
   }
   blendMode(BLEND)
+  // filter(GRAY)
 }
 
 
