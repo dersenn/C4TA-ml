@@ -1,0 +1,1 @@
+{"data":{"inputMin":[44.0078125,23.0078125],"inputMax":[841.0078125,585.0078125],"outputMin":[293.664794921875],"outputMax":[391.9953918457031]},"meta":{"inputUnits":2,"outputUnits":1,"inputs":{"x":{"dtype":"number"},"y":{"dtype":"number"}},"outputs":{"frequency":{"dtype":"number"}},"isNormalized":true}}
