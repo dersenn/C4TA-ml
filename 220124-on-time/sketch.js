@@ -26,7 +26,7 @@ function setup() {
 
   let options = {
     dataUrl: "data/data_toni_neu.csv",
-    inputs: ["soll_an_von", "ist_an_von", "delay"], //"halt_kurz_von1", 
+    inputs: ["soll_an_von"], //"halt_kurz_von1", "ist_an_von", "delay"
     outputs: ["is_delayed"],
     task: "classification",
     debug: true,
@@ -73,8 +73,8 @@ function classify() {
     soll_an_von: currentTime,
     // this is obviously useless and stupid
     // but NN requires all inputs...
-    ist_an_von: 1,
-    delay: 1
+    // ist_an_von: 1,
+    // delay: 1
   };
 
   model.classify(userInputs, gotResults);
