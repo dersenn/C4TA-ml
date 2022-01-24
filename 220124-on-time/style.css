@@ -1,0 +1,9 @@
+html, body {
+  margin: 100;
+  font-family:'Helvetica', sans-serif
+}
+
+canvas {
+  display: block;
+}
+
