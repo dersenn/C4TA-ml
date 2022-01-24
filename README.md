@@ -6,4 +6,4 @@ Adventures in Machine Learning.
 - [Three, Emotion](https://dersenn.github.io/C4TA-ml/220116-emotion-01)
 - [Four, Sketch](https://dersenn.github.io/C4TA-ml/220117-sketch)
 - [Five, FaceApi](https://dersenn.github.io/C4TA-ml/220117-faceApi-01)
-- [Six, NeuronalNetwork, from class](https://dersenn.github.io/C4TA-ml/220123-NN)
+- [Six, NeuronalNetwork Regression, from class](https://dersenn.github.io/C4TA-ml/220123-NN)
